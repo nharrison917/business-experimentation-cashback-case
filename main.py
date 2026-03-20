@@ -1,3 +1,8 @@
+import os
+
+import pandas as pd
+
+from src import config
 from src.generate_data import (
     generate_baseline_spend,
     generate_pre_period,
@@ -11,16 +16,10 @@ from src.analysis import (
     difference_in_differences,
 )
 from src.finance import financial_analysis
-import pandas as pd
-
 from src.visuals import (
-    plot_margin_sensitivity, 
-    plot_normalized_segment_trends
+    plot_margin_sensitivity,
+    plot_normalized_segment_trends,
 )
-
-import os
-
-from src import config
 
 
 def main():

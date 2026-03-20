@@ -33,27 +33,6 @@ def generate_baseline_spend():
     return df
 
 
-def print_diagnostics(df):
-    """
-    Print summary statistics to validate distribution.
-    """
-
-    print("\n=== Baseline Weekly Spend Diagnostics ===\n")
-
-    print(f"Mean weekly spend: ${df['baseline_weekly_spend'].mean():.2f}")
-    print(f"Median weekly spend: ${df['baseline_weekly_spend'].median():.2f}")
-    print(f"Min weekly spend: ${df['baseline_weekly_spend'].min():.2f}")
-    print(f"Max weekly spend: ${df['baseline_weekly_spend'].max():.2f}")
-
-    pct_below_threshold = (
-        (df["baseline_weekly_spend"] < config.WEEKLY_THRESHOLD).mean() * 100
-    )
-
-    print(f"\n% Below Weekly Target Threshold (${config.WEEKLY_THRESHOLD:.2f}): "
-          f"{pct_below_threshold:.2f}%")
-
-    print("\n=========================================\n")
-
 
 def generate_pre_period(df_baseline):
     """

@@ -83,19 +83,24 @@ Profitability depends critically on:
 ---
 
 ## Project Structure
+
+```
 main.py
 src/
-generate_data.py
-analysis.py
-finance.py
-visuals.py
-config.py
+    config.py
+    generate_data.py
+    analysis.py
+    finance.py
+    visuals.py
+```
 
 ---
 
 ## How to Run
 
+```bash
 python main.py
+```
 
 ---
 
@@ -106,3 +111,9 @@ python main.py
 - numpy
 - statsmodels
 - matplotlib
+
+---
+
+## Acknowledgements
+
+Developed with [Claude Code](https://claude.com/claude-code) (Anthropic).
