@@ -82,16 +82,49 @@ Profitability depends critically on:
 
 ---
 
+## Limitations
+
+- Behavioral lift is treated as invariant to cashback rate. A real deployment would require an elasticity estimate from prior experiments or literature; none was available for this simulation.
+- Compliance rate is modeled as a fixed parameter. In practice, compliance is likely correlated with spend tier and incentive magnitude.
+- Customer independence is assumed. Network or social effects on spending behavior are not modeled.
+- Behavioral persistence follows a pre-specified decay curve. Actual post-promotion decay would vary by customer segment and require holdout measurement.
+
+---
+
+## Interactive Dashboard
+
+An interactive Streamlit dashboard allows assumption stress-testing without re-running the simulation.
+
+![Dashboard](docs/dashboard_screenshot.png)
+
+Sidebar sliders adjust:
+- Revenue margin
+- Behavioral persistence duration
+- Compliance rate
+- Cashback rate
+
+Charts and the recommendation block update live. The DiD lift estimate is held fixed — sliders recalculate the financial layer only.
+
+```bash
+streamlit run dashboard.py
+```
+
+---
+
 ## Project Structure
 
 ```
 main.py
+dashboard.py
 src/
     config.py
     generate_data.py
     analysis.py
     finance.py
     visuals.py
+    illustrative.py
+docs/
+    dashboard_screenshot.png
 ```
 
 ---
@@ -99,7 +132,11 @@ src/
 ## How to Run
 
 ```bash
+# Run simulation and generate figures (required before dashboard)
 python main.py
+
+# Launch interactive dashboard
+streamlit run dashboard.py
 ```
 
 ---
@@ -107,10 +144,10 @@ python main.py
 ## Technologies Used
 
 - Python
-- pandas
-- numpy
+- pandas, numpy, scipy
 - statsmodels
-- matplotlib
+- matplotlib, plotly
+- streamlit
 
 ---
 

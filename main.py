@@ -64,6 +64,7 @@ def main():
     # -------------------------------
     os.makedirs("outputs/figures", exist_ok=True)
 
+    df_panel.to_parquet("outputs/figures/df_panel.parquet", index=False)
     plot_normalized_segment_trends(df_panel)
     
     # Calculate incremental spend for margin sensitivity
