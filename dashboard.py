@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 import streamlit as st
 import pandas as pd
 
-from src.illustrative import recalculate, baseline, TREATED_CUSTOMERS, DID_LIFT
+from src.illustrative import recalculate, baseline, TREATED_CUSTOMERS, DID_LIFT, TRUE_LIFT
 from src.visuals import plotly_margin_sensitivity, plotly_normalized_segment_trends
 from src import config
 
@@ -95,7 +95,11 @@ col1.metric(
 col2.metric(
     "DiD Lift",
     f"${DID_LIFT:.2f}/wk",
-    help="Per treated customer per week. Fixed simulation output.",
+    help=(
+        "Per treated customer per week. Fixed simulation output. "
+        f"Ground-truth check: the simulation's true causal lift is ${TRUE_LIFT:.2f}; "
+        "DiD overstates it (see README, Ground-Truth Validation)."
+    ),
 )
 col3.metric(
     "Incremental Spend",

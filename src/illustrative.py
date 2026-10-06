@@ -5,9 +5,9 @@ Illustrative financial model for the dashboard.
 The DiD lift estimate is treated as a fixed simulation output. Sliders
 recalculate only the financial layer on top of it.
 
-Constants are derived from the README summary figures (~$1.69M incremental
-spend, ~$200K cashback cost at baseline assumptions). They will be close to
-but not exactly the simulation output due to rounding in the README.
+Fixed simulation outputs are read from outputs/simulation_results.json,
+which main.py writes. At baseline assumptions this module reproduces the
+simulation's incremental spend and cashback cost exactly.
 
 Compliance scaling: if compliance changes, the average lift per treated
 customer scales proportionally (non-compliers contribute zero lift, so
@@ -15,10 +15,21 @@ they dilute the average). This is an approximation; the true effect would
 require re-running the regression.
 """
 
-# --- Fixed simulation outputs ---
-DID_LIFT = 8.85            # $/customer/week, from DiD regression
-TREATED_CUSTOMERS = 7_956  # customers in targeted mid-tier segment
-AVG_TREATED_SPEND_WEEKLY = 209.50  # $/week average observed spend during promo
+import json
+import os
+
+# --- Fixed simulation outputs (written by main.py) ---
+RESULTS_PATH = os.path.join(
+    os.path.dirname(__file__), "..", "outputs", "simulation_results.json"
+)
+
+with open(RESULTS_PATH, encoding="utf-8") as _f:
+    RESULTS = json.load(_f)
+
+DID_LIFT = RESULTS["did_lift"]                    # $/customer/week, from DiD regression
+TREATED_CUSTOMERS = RESULTS["treated_customers"]  # customers in targeted mid-tier segment
+AVG_TREATED_SPEND_WEEKLY = RESULTS["avg_treated_promo_spend_weekly"]  # $/week during promo
+TRUE_LIFT = RESULTS["ground_truth"]["true_lift"]  # simulation ground truth, for reference
 
 # --- Fixed experiment design ---
 WEEKS_POST = 4  # promo window length; not a slider
