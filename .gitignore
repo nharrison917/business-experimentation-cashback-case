@@ -5,4 +5,5 @@ outputs/*
 !outputs/figures/
 outputs/figures/*
 !outputs/figures/*.png
+!outputs/simulation_results.json
 .claude/

@@ -89,9 +89,9 @@ def plotly_normalized_segment_trends(df_panel, max_week=None):
     )
 
     def segment(val):
-        if val < 125:
+        if val < config.WEEKLY_THRESHOLD:
             return "Low"
-        elif val < 300:
+        elif val < config.UPPER_WEEKLY_THRESHOLD:
             return "Mid (Targeted)"
         else:
             return "High"

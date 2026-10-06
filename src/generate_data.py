@@ -87,8 +87,8 @@ def assign_treatment(df_pre):
     )
 
     pre_avg["treated"] = (
-        (pre_avg["avg_pre_spend"] >= 125)
-        & (pre_avg["avg_pre_spend"] < 300)
+        (pre_avg["avg_pre_spend"] >= config.WEEKLY_THRESHOLD)
+        & (pre_avg["avg_pre_spend"] < config.UPPER_WEEKLY_THRESHOLD)
     ).astype(int)
 
     return pre_avg
@@ -110,13 +110,30 @@ def assign_compliance(df_treatment):
 
     return df_treatment
 
-def generate_post_and_persistence(df_baseline, df_treatment):
+def generate_post_and_persistence(
+    df_baseline,
+    df_treatment,
+    treatment_lift=None,
+    persistence_decay=None,
+    rtm_drift=None,
+):
     """
     Generate promo + persistence weeks.
     Applies:
     - 12% lift during promo (4 weeks)
     - Decaying persistence afterward
+
+    Effect parameters default to config values. Overriding them (e.g.
+    treatment_lift=0) produces a counterfactual panel with identical noise,
+    which the ground-truth validation uses.
     """
+
+    if treatment_lift is None:
+        treatment_lift = config.TREATMENT_LIFT
+    if persistence_decay is None:
+        persistence_decay = config.PERSISTENCE_DECAY
+    if rtm_drift is None:
+        rtm_drift = config.REGRESSION_TO_MEAN
 
     records = []
 
@@ -156,15 +173,15 @@ def generate_post_and_persistence(df_baseline, df_treatment):
 
         # Regression-to-mean drift
         df_week.loc[df_week["treated"] == 1, "spend"] *= (
-            1 + config.REGRESSION_TO_MEAN
+            1 + rtm_drift
         )
 
         # Determine lift
         if i < config.WEEKS_POST:
-            lift = config.TREATMENT_LIFT
+            lift = treatment_lift
         else:
             decay_index = i - config.WEEKS_POST
-            lift = config.PERSISTENCE_DECAY[decay_index]
+            lift = persistence_decay[decay_index]
 
         treatment_mask = (
             (df_week["treated"] == 1)
@@ -177,3 +194,31 @@ def generate_post_and_persistence(df_baseline, df_treatment):
 
     return pd.concat(records, ignore_index=True)
 
+
+def simulate_panel(**effect_overrides):
+    """
+    Run the full data-generation sequence and return the combined panel.
+
+    Every stochastic step reseeds from config.RANDOM_SEED, so repeated calls
+    produce identical noise. effect_overrides are passed to
+    generate_post_and_persistence (treatment_lift, persistence_decay,
+    rtm_drift).
+    """
+
+    df_baseline = generate_baseline_spend()
+    df_pre = generate_pre_period(df_baseline)
+
+    df_treatment = assign_treatment(df_pre)
+    df_treatment = assign_compliance(df_treatment)
+
+    df_pre = df_pre.merge(
+        df_treatment[["customer_id", "treated", "compliant"]],
+        on="customer_id",
+        how="left",
+    )
+
+    df_post = generate_post_and_persistence(
+        df_baseline, df_treatment, **effect_overrides
+    )
+
+    return pd.concat([df_pre, df_post], ignore_index=True)
