@@ -1,21 +1,15 @@
+import json
 import os
 
-import pandas as pd
-
 from src import config
-from src.generate_data import (
-    generate_baseline_spend,
-    generate_pre_period,
-    assign_treatment,
-    assign_compliance,
-    generate_post_and_persistence,
-)
+from src.generate_data import simulate_panel
 from src.analysis import (
     baseline_diagnostics,
     naive_post_comparison,
     difference_in_differences,
 )
 from src.finance import financial_analysis
+from src.validation import ground_truth_check
 from src.visuals import (
     plot_margin_sensitivity,
     plot_normalized_segment_trends,
@@ -27,21 +21,8 @@ def main():
     # -------------------------------
     # 1. Generate Data
     # -------------------------------
-    df_baseline = generate_baseline_spend()
-    df_pre = generate_pre_period(df_baseline)
-
-    df_treatment = assign_treatment(df_pre)
-    df_treatment = assign_compliance(df_treatment)
-
-    df_pre = df_pre.merge(
-        df_treatment[["customer_id", "treated", "compliant"]],
-        on="customer_id",
-        how="left",
-    )
-
-    df_post = generate_post_and_persistence(df_baseline, df_treatment)
-
-    df_panel = pd.concat([df_pre, df_post], ignore_index=True)
+    print("Simulating customer panel...")
+    df_panel = simulate_panel()
 
     # -------------------------------
     # 2. Analysis
@@ -60,7 +41,12 @@ def main():
     financial_analysis(df_panel, model)
 
     # -------------------------------
-    # 4. Generate Visuals
+    # 4. Ground-Truth Validation
+    # -------------------------------
+    validation = ground_truth_check(df_panel, model.params["treated:post"])
+
+    # -------------------------------
+    # 5. Generate Visuals
     # -------------------------------
     os.makedirs("outputs/figures", exist_ok=True)
 
@@ -93,6 +79,39 @@ def main():
     )
 
     plot_margin_sensitivity(incremental_spend, cashback_cost)
+
+    # -------------------------------
+    # 6. Export Results (read by dashboard)
+    # -------------------------------
+    promo_spend_weekly = (
+        df_panel.loc[cashback_mask, "spend"].sum()
+        / treated_customers
+        / config.WEEKS_POST
+    )
+    true_incremental_spend = (
+        validation["true_lift"] * treated_customers * total_post_weeks
+    )
+
+    results = {
+        "did_lift": round(float(model.params["treated:post"]), 4),
+        "did_ci_95": [round(float(x), 4) for x in model.conf_int().loc["treated:post"]],
+        "treated_customers": int(treated_customers),
+        "avg_treated_promo_spend_weekly": round(float(promo_spend_weekly), 4),
+        "incremental_spend": round(float(incremental_spend), 2),
+        "cashback_cost": round(float(cashback_cost), 2),
+        "break_even_margin": round(float(cashback_cost / incremental_spend), 4),
+        "ground_truth": {
+            **{k: round(float(v), 4) for k, v in validation.items()},
+            "break_even_margin_at_true_lift": round(
+                float(cashback_cost / true_incremental_spend), 4
+            ),
+        },
+    }
+
+    with open("outputs/simulation_results.json", "w", encoding="utf-8") as f:
+        json.dump(results, f, indent=2)
+
+    print("\nSaved figures to outputs/figures/ and results to outputs/simulation_results.json")
 
 
 if __name__ == "__main__":

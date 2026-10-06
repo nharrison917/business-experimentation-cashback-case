@@ -1,0 +1,21 @@
+{
+  "did_lift": 8.853,
+  "did_ci_95": [
+    7.2307,
+    10.4752
+  ],
+  "treated_customers": 7948,
+  "avg_treated_promo_spend_weekly": 210.6074,
+  "incremental_spend": 1688723.48,
+  "cashback_cost": 200868.93,
+  "break_even_margin": 0.1189,
+  "ground_truth": {
+    "did_estimate": 8.853,
+    "true_lift": 5.9095,
+    "total_bias": 2.9434,
+    "bias_rtm_drift": 1.9726,
+    "bias_trend_and_selection": 0.9708,
+    "overstatement_pct": 0.4981,
+    "break_even_margin_at_true_lift": 0.1782
+  }
+}

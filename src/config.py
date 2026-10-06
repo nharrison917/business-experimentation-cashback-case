@@ -32,16 +32,20 @@ LOGNORMAL_SIGMA = 0.75   # controls skew / dispersion
 # Targeting Rule
 # Monthly threshold = $500
 # Convert to weekly (~125)
+# Mid tier (targeted) = [WEEKLY_THRESHOLD, UPPER_WEEKLY_THRESHOLD)
 # ----------------
 MONTHLY_THRESHOLD = 500
 WEEKLY_THRESHOLD = MONTHLY_THRESHOLD / 4
+UPPER_WEEKLY_THRESHOLD = 300
 
 # ----------------
 # Behavioral Dynamics
 # ----------------
 WEEKLY_VOLATILITY = 0.20       # percent noise around baseline
 MACRO_TREND_WEEKLY = 0.002     # 0.2% weekly upward macro trend
-REGRESSION_TO_MEAN = 0.01      # small upward drift for low spenders
+REGRESSION_TO_MEAN = 0.01      # 1% post-period upward drift applied to ALL treated
+                               # customers; DiD cannot separate it from the treatment
+                               # effect (quantified by src/validation.py)
 
 # ----------------
 # Treatment Effect
