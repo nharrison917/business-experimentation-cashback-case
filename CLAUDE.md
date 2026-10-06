@@ -2,8 +2,9 @@
 
 ## Project Status
 
-Two-phase project. Phase 1 (simulation + DiD analysis) is complete.
-Phase 2 (Streamlit dashboard) is planned in PHASE_TWO.md and not yet built.
+Complete. Phase 1 (simulation + DiD analysis) and Phase 2 (Streamlit
+dashboard) are both built; see CHANGELOG.md for history. The repo is
+portfolio-facing, so README accuracy matters.
 
 ---
 
@@ -15,22 +16,40 @@ The dashboard does NOT re-run the simulation on slider change.
 Sliders recalculate the financial layer only:
 
 ```
-incremental_spend = lift * compliant_customers * sum(decay_weights)
-cashback_cost     = cashback_rate * total_treated_spend
+adjusted_lift     = did_lift * (compliance / 0.65)
+incremental_spend = adjusted_lift * treated_customers * (4 + persistence_weeks)
+cashback_cost     = cashback_rate * avg_treated_promo_spend * treated_customers * 4
 net_profit        = (incremental_spend * margin) - cashback_cost
 break_even_margin = cashback_cost / incremental_spend
 ```
 
-This logic will live in `src/illustrative.py`. Do not propose re-running
-`generate_data.py` or `analysis.py` in response to slider input.
+This logic lives in `src/illustrative.py`, which reads its fixed inputs from
+`outputs/simulation_results.json` (written by `main.py`). Do not hard-code
+simulation outputs there. Do not propose re-running `generate_data.py` or
+`analysis.py` in response to slider input.
+
+---
+
+## Ground-Truth Validation: the DiD Estimate Is Biased
+
+`src/validation.py` re-simulates with the promotion off (same seeds) and shows
+DiD overstates the true lift (~$8.85 vs ~$5.91). The bias comes from the
+`REGRESSION_TO_MEAN` drift applied to all treated customers and from running
+DiD in levels on a multiplicative trend. This is documented in the README as a
+finding, deliberately. Do not "fix" the simulation to remove it without
+discussing first -- README figures, PNGs, the results JSON and the dashboard
+screenshot all depend on current outputs.
 
 ---
 
 ## Run Order Dependency
 
-On a fresh clone, `main.py` must be run before `dashboard.py`.
-`main.py` generates `outputs/figures/normalized_segment_trends.png` and
-`outputs/figures/margin_sensitivity.png`, which the dashboard uses.
+`main.py` generates `outputs/simulation_results.json` and the two PNGs in
+`outputs/figures/`. All three are committed, so the dashboard runs on a fresh
+clone. Running `main.py` also writes `outputs/figures/df_panel.parquet`
+(ignored), which enables the interactive segment chart; without it the
+dashboard falls back to the static PNG. After changing `config.py`, re-run
+`main.py` and commit the regenerated outputs.
 
 ```bash
 python main.py
@@ -45,8 +64,8 @@ The existing matplotlib functions (`plot_normalized_segment_trends`,
 `plot_margin_sensitivity`) save static PNGs and are called by `main.py`.
 Do not remove or modify them.
 
-Phase 2 will add Plotly equivalents (`plotly_normalized_segment_trends`,
-`plotly_margin_sensitivity`) that return `Figure` objects for the dashboard.
+The Plotly equivalents (`plotly_normalized_segment_trends`,
+`plotly_margin_sensitivity`) return `Figure` objects for the dashboard.
 These coexist in the same file — that is intentional.
 
 ---
@@ -64,4 +83,6 @@ outputs/figures/*
 !outputs/figures/*.png
 ```
 
-Do not simplify this pattern.
+Do not simplify this pattern. A fifth line, `!outputs/simulation_results.json`,
+works as a direct negation because the file sits directly under `outputs/`
+(whose contents, not the directory itself, are ignored).
